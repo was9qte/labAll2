@@ -1,0 +1,341 @@
+using System;
+using System.Data;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
+
+public static class DataAccessLayer
+{
+    // 5.1.1
+    private static string server = @"localhost";
+    private static string database = "Cinema";
+    private static string login = "sa";
+    private static string password = "12345";
+
+    // Строка подключения
+    public static string ConnectionString
+    {
+        get
+        {
+            SqlConnectionStringBuilder builder =
+                new SqlConnectionStringBuilder();
+
+            builder.DataSource = server;
+            builder.InitialCatalog = database;
+            builder.UserID = login;
+            builder.Password = password;
+            builder.TrustServerCertificate = true;
+
+            return builder.ConnectionString;
+        }
+    }
+
+    // 5.1.2
+    // Изменение настроек подключения
+    public static void SetConnectionSettings(
+        string newServer,
+        string newDatabase,
+        string newLogin,
+        string newPassword)
+    {
+        server = newServer;
+        database = newDatabase;
+        login = newLogin;
+        password = newPassword;
+    }
+
+    // 5.1.3
+    // Проверка подключения к БД
+    public static async Task<bool> CheckConnectionAsync()
+    {
+        try
+        {
+            using SqlConnection connection =
+                new SqlConnection(ConnectionString);
+
+            await connection.OpenAsync();
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    // 5.2.1
+    // Выполнение SQL-команды INSERT / UPDATE / DELETE
+    public static async Task<int> ExecuteNonQueryAsync(string sql)
+    {
+        using SqlConnection connection =
+            new SqlConnection(ConnectionString);
+
+        await connection.OpenAsync();
+
+        using SqlCommand command =
+            new SqlCommand(sql, connection);
+
+        return await command.ExecuteNonQueryAsync();
+    }
+
+    // 5.2.2
+    // Выполнение запроса, возвращающего одно значение
+    public static async Task<object?> ExecuteScalarAsync(string sql)
+    {
+        using SqlConnection connection =
+            new SqlConnection(ConnectionString);
+
+        await connection.OpenAsync();
+
+        using SqlCommand command =
+            new SqlCommand(sql, connection);
+
+        return await command.ExecuteScalarAsync();
+    }
+
+    // 5.3.1
+    // Изменение цены фильма
+    public static async Task<int> ChangeFilmPriceAsync(
+        int filmId,
+        decimal newPrice)
+    {
+        string sql = @"
+            UPDATE Films
+            SET Price = @Price
+            WHERE FilmId = @FilmId";
+
+        using SqlConnection connection =
+            new SqlConnection(ConnectionString);
+
+        await connection.OpenAsync();
+
+        using SqlCommand command =
+            new SqlCommand(sql, connection);
+
+        command.Parameters.Add("@Price", SqlDbType.Decimal)
+            .Value = newPrice;
+
+        command.Parameters.Add("@FilmId", SqlDbType.Int)
+            .Value = filmId;
+
+        return await command.ExecuteNonQueryAsync();
+    }
+
+    // 5.4.1
+    // Загрузка файла в БД
+    public static async Task<int> UploadFileAsync(
+        int filmId,
+        string fileName)
+    {
+        byte[] fileData = await File.ReadAllBytesAsync(fileName);
+
+        string sql = @"
+            UPDATE Films
+            SET FileData = @FileData
+            WHERE FilmId = @FilmId";
+
+        using SqlConnection connection =
+            new SqlConnection(ConnectionString);
+
+        await connection.OpenAsync();
+
+        using SqlCommand command =
+            new SqlCommand(sql, connection);
+
+        command.Parameters.Add("@FileData", SqlDbType.VarBinary, -1)
+            .Value = fileData;
+
+        command.Parameters.Add("@FilmId", SqlDbType.Int)
+            .Value = filmId;
+
+        return await command.ExecuteNonQueryAsync();
+    }
+
+    // 5.4.2
+    // Выгрузка файла из БД
+    public static async Task<bool> DownloadFileAsync(
+        int filmId,
+        string fileName)
+    {
+        string sql = @"
+            SELECT FileData
+            FROM Films
+            WHERE FilmId = @FilmId";
+
+        using SqlConnection connection =
+            new SqlConnection(ConnectionString);
+
+        await connection.OpenAsync();
+
+        using SqlCommand command =
+            new SqlCommand(sql, connection);
+
+        command.Parameters.Add("@FilmId", SqlDbType.Int)
+            .Value = filmId;
+
+        object? result = await command.ExecuteScalarAsync();
+
+        if (result == null || result == DBNull.Value)
+            return false;
+
+        byte[] fileData = (byte[])result;
+
+        await File.WriteAllBytesAsync(fileName, fileData);
+
+        return true;
+    }
+
+    // 5.5.1
+    // Получение списка фильмов в DataTable
+    public static async Task<DataTable> GetFilmsAsync()
+    {
+        string sql = @"
+            SELECT *
+            FROM Films";
+
+        using SqlConnection connection =
+            new SqlConnection(ConnectionString);
+
+        await connection.OpenAsync();
+
+        using SqlCommand command =
+            new SqlCommand(sql, connection);
+
+        using SqlDataReader reader =
+            await command.ExecuteReaderAsync();
+
+        DataTable table = new DataTable();
+
+        table.Load(reader);
+
+        return table;
+    }
+}
+
+
+
+
+
+
+
+
+using System;
+using System.Data;
+using System.Threading.Tasks;
+
+class Program
+{
+    static async Task Main()
+    {
+        // 5.1.1
+        Console.WriteLine("Строка подключения:");
+        Console.WriteLine(DataAccessLayer.ConnectionString);
+
+        // 5.1.2
+        DataAccessLayer.SetConnectionSettings(
+            @"localhost",
+            "Cinema",
+            "sa",
+            "12345"
+        );
+
+        Console.WriteLine("\nНовая строка подключения:");
+        Console.WriteLine(DataAccessLayer.ConnectionString);
+
+        // 5.1.3
+        bool connectionResult =
+            await DataAccessLayer.CheckConnectionAsync();
+
+        Console.WriteLine(
+            $"\nПодключение к БД: {connectionResult}");
+
+        // 5.2.1
+        string sql = @"
+            UPDATE Films
+            SET Price = Price + 10
+            WHERE FilmId = 1";
+
+        int affectedRows =
+            await DataAccessLayer.ExecuteNonQueryAsync(sql);
+
+        Console.WriteLine(
+            $"Изменено строк: {affectedRows}");
+
+        // 5.2.2
+        string scalarSql = @"
+            SELECT COUNT(*)
+            FROM Films";
+
+        object? count =
+            await DataAccessLayer.ExecuteScalarAsync(scalarSql);
+
+        Console.WriteLine(
+            $"Количество фильмов: {count}");
+
+        // 5.3.1
+        int priceResult =
+            await DataAccessLayer.ChangeFilmPriceAsync(
+                1,
+                500m);
+
+        Console.WriteLine(
+            $"Изменено строк при изменении цены: {priceResult}");
+
+        // 5.4.1
+        int uploadResult =
+            await DataAccessLayer.UploadFileAsync(
+                1,
+                @"C:\Files\film.jpg");
+
+        Console.WriteLine(
+            $"Загрузка файла: изменено строк = {uploadResult}");
+
+        // 5.4.2
+        bool downloadResult =
+            await DataAccessLayer.DownloadFileAsync(
+                1,
+                @"C:\Files\downloaded_film.jpg");
+
+        Console.WriteLine(
+            $"Выгрузка файла: {downloadResult}");
+
+        // 5.5.1
+        DataTable films =
+            await DataAccessLayer.GetFilmsAsync();
+
+        Console.WriteLine("\nСписок фильмов:");
+
+        foreach (DataRow row in films.Rows)
+        {
+            foreach (DataColumn column in films.Columns)
+            {
+                Console.Write($"{column.ColumnName}: ");
+                Console.Write($"{row[column]} | ");
+            }
+
+            Console.WriteLine();
+        }
+
+        Console.ReadKey();
+    }
+}
+
+
+
+
+
+
+
+CREATE TABLE Films
+(
+    FilmId INT PRIMARY KEY IDENTITY(1,1),
+    Title NVARCHAR(200) NOT NULL,
+    Price DECIMAL(10,2) NOT NULL,
+    FileData VARBINARY(MAX) NULL
+);
+
+INSERT INTO Films (Title, Price)
+VALUES
+('Матрица', 300),
+('Интерстеллар', 400),
+('Начало', 350);
