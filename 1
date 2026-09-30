@@ -1,3 +1,96 @@
+// Visitor.cs using System.ComponentModel.DataAnnotations; using System.ComponentModel.DataAnnotations.Schema;
+[Table("Посетитель")] public class Visitor { [Key] [Column("Id")] public int Id { get; set; }
+[Column("Name")]
+[Required]
+[MaxLength(100)]
+public string Name { get; set; }
+
+[Column("Age")]
+public int? Age { get; set; }
+
+public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
+}
+// Ticket.cs using System.ComponentModel.DataAnnotations; using System.ComponentModel.DataAnnotations.Schema;
+[Table("Билет")] public class Ticket { [Key] [Column("Id")] public int Id { get; set; }
+[Column("Price")]
+[Required]
+public decimal Price { get; set; }
+
+[Column("VisitorId")]
+[ForeignKey("Visitor")]
+public int VisitorId { get; set; }
+
+public Visitor Visitor { get; set; }
+}
+// AppContext.cs using Microsoft.EntityFrameworkCore;
+public class AppContext : DbContext { public DbSet<Visitor> Visitors { get; set; } public DbSet<Ticket> Tickets { get; set; }
+protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+{
+    optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=VisitorsDb;Trusted_Connection=True;");
+}
+}
+// VisitorService.cs using System.Collections.Generic; using System.Threading.Tasks;
+public class VisitorService { private readonly AppContext _context;
+public VisitorService(AppContext context)
+{
+    _context = context;
+}
+
+public async Task<List<Visitor>> GetAllAsync()
+{
+    return await _context.Visitors.ToListAsync();
+}
+
+public async Task<Visitor?> GetByIdAsync(int id)
+{
+    return await _context.Visitors.FindAsync(id);
+}
+}
+// TicketService.cs using System.Collections.Generic; using System.Threading.Tasks;
+public class TicketService { private readonly AppContext _context;
+public TicketService(AppContext context)
+{
+    _context = context;
+}
+
+public async Task<List<Ticket>> GetAllAsync()
+{
+    return await _context.Tickets.ToListAsync();
+}
+
+public async Task<Ticket?> GetByIdAsync(int id)
+{
+    return await _context.Tickets.FindAsync(id);
+}
+}
+// Program.cs using System;
+class Program { static async Task Main(string[] args) { using var context = new AppContext(); var visitorService = new VisitorService(context); var ticketService = new TicketService(context);
+    var visitors = await visitorService.GetAllAsync();
+    Console.WriteLine("Посетители:");
+    foreach (var v in visitors)
+        Console.WriteLine(\$"Id: {v.Id}, Name: {v.Name}, Age: {v.Age}");
+
+    var tickets = await ticketService.GetAllAsync();
+    Console.WriteLine("\nБилеты:");
+    foreach (var t in tickets)
+        Console.WriteLine(\$"Id: {t.Id}, Price: {t.Price}, VisitorId: {t.VisitorId}");
+
+    var visitorById = await visitorService.GetByIdAsync(1);
+    Console.WriteLine(\$"\nПосетитель по Id=1: {visitorById?.Name ?? "Не найден"}");
+
+    var ticketById = await ticketService.GetByIdAsync(1);
+    Console.WriteLine(\$"Билет по Id=1: {(ticketById != null ? ticketById.Price.ToString() : "Не найден")}");
+}
+}
+
+
+
+
+
+
+
+
+
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
