@@ -1,4 +1,30 @@
 [Fact]
+public void Divide_ShouldThrow_WhenDivisorIsZero()
+{
+    // Arrange
+    var first = new Fraction(1, 2);
+    var second = new Fraction(0, 1);
+
+    // Act
+    Action act = () => first / second;
+
+    // Assert
+    act.Should().Throw<DivideByZeroException>()
+        .WithMessage("Cannot divide by zero.");
+}
+
+
+
+
+
+
+
+
+
+[Fact]
+
+
+
 public void Constructor_ShouldMakeDenominatorPositive()
 {
     // Arrange
