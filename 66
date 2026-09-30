@@ -1,3 +1,23 @@
+[Fact]
+public void Constructor_ShouldMakeDenominatorPositive()
+{
+    // Arrange
+    int numerator = 1;
+    int denominator = -2;
+
+    // Act
+    var fraction = new Fraction(numerator, denominator);
+
+    // Assert
+    fraction.Numerator.Should().Be(-1);
+    fraction.Denominator.Should().Be(2);
+}
+
+
+
+
+
+
 using FluentAssertions;
 using FractionLib;
 
