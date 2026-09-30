@@ -1,0 +1,84 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MuseumApp.Models
+{
+    [Table("Посетитель")]
+    public class Visitor
+    {
+        [Key]
+        [Column("Код посетителя")]
+        public int Id { get; set; }
+
+        [Required]
+        [MaxLength(100)]
+        [Column("ФИО")]
+        public string FullName { get; set; }
+
+        [MaxLength(20)]
+        [Column("Телефон")]
+        public string Phone { get; set; }
+
+        // Навигационное свойство
+        public virtual ICollection<Ticket> Tickets { get; set; }
+            = new List<Ticket>();
+    }
+}
+
+
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MuseumApp.Models
+{
+    [Table("Билет")]
+    public class Ticket
+    {
+        [Key]
+        [Column("Код билета")]
+        public int Id { get; set; }
+
+        [Required]
+        [MaxLength(100)]
+        [Column("Название")]
+        public string Name { get; set; }
+
+        [Required]
+        [Column("Цена")]
+        public decimal Price { get; set; }
+
+        [Column("Код посетителя")]
+        public int VisitorId { get; set; }
+
+        // Внешний ключ
+        [ForeignKey("VisitorId")]
+        public virtual Visitor Visitor { get; set; }
+    }
+}
+
+
+
+
+
+
+
+
+using Microsoft.EntityFrameworkCore;
+using MuseumApp.Models;
+
+namespace MuseumApp.Data
+{
+    public class AppDbContext : DbContext
+    {
+        public DbSet<Visitor> Visitors { get; set; }
+        public DbSet<Ticket> Tickets { get; set; }
+
+        protected override void OnConfiguring(
+            DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlite("Data Source=Museum.db");
+        }
+    }
+}
+
