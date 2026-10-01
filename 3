@@ -1,0 +1,103 @@
+name: Отчёт о дефекте
+description: Сообщить об ошибке в приложении PsychoTest
+title: "[Ошибка]: "
+labels: ["bug"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Отчёт о дефекте
+        Перед созданием отчёта проверьте существующие Issues.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Описание
+      description: Подробно опишите обнаруженный дефект.
+      placeholder: Опишите проблему.
+    validations:
+      required: true
+
+  - type: textarea
+    id: preconditions
+    attributes:
+      label: Предусловия
+      description: Условия, необходимые для воспроизведения.
+      placeholder: Укажите необходимые условия.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Шаги воспроизведения
+      description: Последовательность действий.
+      placeholder: |
+        1. Запустить приложение.
+        2. Открыть нужный раздел.
+        3. Выполнить действие.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемый результат
+      description: Что должно произойти?
+      placeholder: Приложение должно ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Фактический результат
+      description: Что происходит на самом деле?
+      placeholder: Фактически происходит ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: materials
+    attributes:
+      label: Скриншоты / Доп. материалы
+      description: Добавьте скриншоты или другие материалы.
+      placeholder: Добавьте материалы или напишите "нет".
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Приоритет
+      description: Насколько срочно нужно исправить дефект?
+      options:
+        - Низкий
+        - Средний
+        - Высокий
+        - Критический
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Серьезность
+      description: Насколько сильно дефект влияет на приложение?
+      options:
+        - Незначительная
+        - Средняя
+        - Серьезная
+        - Блокирующая
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: existing_reports
+    attributes:
+      label: Проверка существующих отчётов
+      description: Подтвердите проверку существующих Issues.
+      options:
+        - label: Я ознакомился с существующими отчетами и не нашёл дубликат.
+          required: true
