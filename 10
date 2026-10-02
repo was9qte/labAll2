@@ -1,0 +1,128 @@
+using FilmApp.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace FilmApp.Data;
+
+public class FilmDbContext : DbContext
+{
+    public DbSet<Film> Films { get; set; }
+
+    protected override void OnConfiguring(
+        DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseSqlServer(
+            "Server=mssql;" +
+            "Database=ispp5503;" +
+            "Trusted_Connection=True;" +
+            "TrustServerCertificate=True;");
+    }
+
+    protected override void OnModelCreating(
+        ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Film>()
+            .ToTable("Film", "dbo");
+
+        modelBuilder.Entity<Film>()
+            .HasKey(f => f.Id);
+    }
+}
+
+
+
+
+
+
+using FilmApp.Data;
+using FilmApp.Models;
+
+namespace FilmApp.Services;
+
+public class FilmService
+{
+    public List<Film> GetFilms()
+    {
+        using var db = new FilmDbContext();
+
+        return db.Films
+            .OrderBy(f => f.Id)
+            .ToList();
+    }
+
+    public void DeleteFilm(Film film)
+    {
+        using var db = new FilmDbContext();
+
+        db.Films.Remove(film);
+
+        db.SaveChanges();
+    }
+
+    public void DeleteFilms(List<Film> films)
+    {
+        using var db = new FilmDbContext();
+
+        if (films.Count == 1)
+        {
+            db.Films.Remove(films[0]);
+        }
+        else if (films.Count > 1)
+        {
+            db.Films.RemoveRange(films);
+        }
+
+        db.SaveChanges();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+<Window x:Class="FilmApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Фильмы"
+        Height="600"
+        Width="1000"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid Margin="15">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal"
+                    Margin="0,0,0,10">
+
+            <Button Content="Добавить"
+                    Width="110"
+                    Height="35"
+                    Margin="0,0,10,0"
+                    Click="AddButton_Click"/>
+
+            <Button Content="Удалить"
+                    Width="110"
+                    Height="35"
+                    Click="DeleteButton_Click"/>
+
+        </StackPanel>
+
+        <DataGrid x:Name="FilmsDataGrid"
+                  Grid.Row="1"
+                  AutoGenerateColumns="True"
+                  IsReadOnly="True"
+                  SelectionMode="Extended"
+                  SelectionUnit="FullRow"/>
+
+    </Grid>
+
+</Window>
