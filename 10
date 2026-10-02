@@ -126,3 +126,89 @@ public class FilmService
     </Grid>
 
 </Window>
+
+
+
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows;
+using FilmApp.Models;
+using FilmApp.Services;
+
+namespace FilmApp;
+
+public partial class MainWindow : Window
+{
+    private readonly FilmService _filmService = new();
+
+    public MainWindow()
+    {
+        InitializeComponent();
+
+        LoadFilms();
+    }
+
+    private void LoadFilms()
+    {
+        try
+        {
+            FilmsDataGrid.ItemsSource = _filmService.GetFilms();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Не удалось загрузить фильмы. Причина: {ex.Message}",
+                "Ошибка",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void AddButton_Click(object sender, RoutedEventArgs e)
+    {
+        MessageBox.Show(
+            "Добавление фильма будет реализовано в следующем задании.",
+            "Информация",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+    }
+
+    private void DeleteButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            List<Film> selectedFilms = FilmsDataGrid.SelectedItems
+                .Cast<Film>()
+                .ToList();
+
+            if (selectedFilms.Count == 0)
+            {
+                MessageBox.Show(
+                    "Выберите записи для удаления.",
+                    "Информация",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                return;
+            }
+
+            _filmService.DeleteFilms(selectedFilms);
+
+            LoadFilms();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Не удалось удалить записи. Причина: {ex.Message}",
+                "Ошибка",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+}
